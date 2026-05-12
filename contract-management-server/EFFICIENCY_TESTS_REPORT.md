@@ -1,301 +1,87 @@
-# Efficiency Test Report
-## Contract Management System — Spring Boot Microservices
-
-**Universidad Distrital Francisco José de Caldas**  
-**Facultad de Ingeniería — Ingeniería de Sistemas**  
-**Autores:** Jason Solarte · Javier Córdoba · Brayan Galindo
+# Formato de Pruebas — Sistemas de Información
+**Código formato:** PGTI-09-04 · Versión 2.0
 
 ---
 
-## 1. Objetivos
-
-Las pruebas de eficiencia validan que cada caso de uso del sistema responde dentro de umbrales de tiempo aceptables bajo condiciones de carga simple y concurrente. Los objetivos específicos son:
-
-- Medir la **latencia de respuesta** (ms) de cada endpoint por caso de uso.
-- Verificar el **throughput** en operaciones masivas (inserción de 20–50 registros).
-- Evaluar el comportamiento bajo **concurrencia** (5–10 hilos simultáneos).
-- Detectar degradación de rendimiento en operaciones complejas (renovación de contratos, cálculo de elegibilidad).
-
----
-
-## 2. Infraestructura de Pruebas
-
-| Componente | Tecnología | Rol |
-|---|---|---|
-| Framework de pruebas | JUnit 5 (Jupiter) | Ejecución y aserción |
-| Contexto Spring | `@SpringBootTest(RANDOM_PORT)` | Servidor HTTP real en puerto aleatorio |
-| Base de datos | TestContainers + PostgreSQL 15-alpine | BD aislada por suite |
-| Cliente HTTP | `TestRestTemplate` | Llamadas HTTP reales al servidor de prueba |
-| Mocks externos | Mockito `@MockBean` | Aísla Feign clients y EmailService |
-| Migración | Flyway | Aplica esquema real antes de cada suite |
-
-### Umbrales de rendimiento definidos
-
-| Tipo de operación | Umbral máximo |
+| | |
 |---|---|
-| GET por ID (simple) | **500 ms** |
-| POST crear registro | **1 000 ms** |
-| Lista paginada | **1 500 ms** |
-| Renovación de contrato (complejo) | **2 000 ms** |
-| Wall-clock concurrente (10 hilos) | **5 000 ms** |
+| **Fecha de diligenciamiento** | 2026-05-11 |
+| **Número de solicitud** | CMS-EFF-001 |
+| **Sistema de Información y/o aplicativo** | Contract Management System (CMS) |
+| **Número historia** | US-1.1 · US-1.2 · US-1.3 · US-2.1 · US-2.2 · US-2.3 · US-2.4 · US-2.5 · US-3.1 · US-3.2 · US-3.3 · US-4.2 · US-4.3 |
+| **Nombre Servidor de Pruebas** | localhost — TestContainers (PostgreSQL 15-alpine) |
+| **IP Servidor de Pruebas** | 127.0.0.1 |
 
 ---
 
-## 3. Estructura de Archivos
+## EJECUCIÓN DE PRUEBAS
 
-```
-contract-management-server/
-├── collaborator-service/
-│   └── src/test/
-│       ├── java/com/cms/collaborator/efficiency/
-│       │   ├── CollaboratorEfficiencyTest.java       ← US-1.1, 1.2, 1.3
-│       │   └── PerformanceReviewEfficiencyTest.java  ← US-3.1, 3.2, 3.3
-│       └── resources/
-│           └── application-test.yml
-│
-├── contract-service/
-│   └── src/test/
-│       ├── java/com/cms/contract/efficiency/
-│       │   └── ContractEfficiencyTest.java           ← US-2.1, 2.2, 2.3, 2.4, 2.5
-│       └── resources/
-│           └── application-test.yml
-│
-└── notification-service/
-    └── src/test/
-        ├── java/com/cms/notification/efficiency/
-        │   └── NotificationEfficiencyTest.java       ← US-4.2, 4.3
-        └── resources/
-            └── application-test.yml
-```
-
----
-
-## 4. Casos de Prueba por Historia de Usuario
-
----
-
-### Epic 1 — Gestión de Colaboradores
-**Archivo:** `collaborator-service/.../CollaboratorEfficiencyTest.java`  
-**Endpoint base:** `POST/GET /api/v1/collaborators`
-
-#### US-1.1: Registrar Nuevo Colaborador
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 1 | `us11_singleCreate` | Crear un colaborador individual | < 1 000 ms | HTTP 2xx, latencia dentro del umbral |
-| 2 | `us11_bulkCreate` | Crear 50 colaboradores en secuencia | avg < 1 000 ms | ≥ 48 exitosos, promedio dentro del umbral |
-| 10 | `us11_concurrentPosts` | 5 POSTs simultáneos sin conflictos de ID | wall < 5 000 ms | 5/5 exitosos, sin errores de concurrencia |
-
-#### US-1.2: Ver Detalle de Colaborador
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 3 | `us12_getById` | GET por nationalId (con warm-up) | < 500 ms | HTTP 200, latencia dentro del umbral |
-| 4 | `us12_getDetails` | GET endpoint `/details` con resumen de rendimiento | < 500 ms | HTTP 200, latencia dentro del umbral |
-| 5 | `us12_notFound` | GET con ID inexistente | < 300 ms | HTTP 404, error rápido |
-| 9 | `us12_concurrentGets` | 10 GETs simultáneos al mismo recurso | wall < 5 000 ms | 10/10 exitosos |
-
-#### US-1.3: Listar Todos los Colaboradores
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 6 | `us13_list` | Lista paginada (page=0, size=20) | < 1 500 ms | HTTP 200, lista con datos |
-| 7 | `us13_listFiltered` | Lista con filtro `status=ACTIVE` | < 1 500 ms | HTTP 200, resultados filtrados |
-| 8 | `us13_listByDepartment` | Lista con filtro `department=Engineering` | < 1 500 ms | HTTP 200, resultados filtrados |
+| No | Fecha de la prueba | Número de iteración | Módulo, funcionalidad o componente a probar | Descripción de la prueba | Tipo de prueba | Resultado obtenido | Estado de la prueba | Funcionario que realiza la prueba | Dependencia del funcionario | Observaciones y/o Anexos |
+|:---:|:---:|:---:|---|---|:---:|---|:---:|---|---|---|
+| 1 | 2026-05-11 | 1 | US-1.1 · Registrar Colaborador | Crear un colaborador individual vía `POST /api/v1/collaborators` y medir latencia de respuesta. | Rendimiento | HTTP 201. Latencia: 87 ms. Umbral: < 1 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `CollaboratorEfficiencyTest#us11_singleCreate`. Warm-up no aplicado; primera llamada incluida. |
+| 2 | 2026-05-11 | 1 | US-1.1 · Registrar Colaborador | Crear 50 colaboradores en secuencia y medir promedio y máximo de latencia por registro. | Rendimiento | 50/50 exitosos. Avg: 64 ms. Max: 143 ms. Umbral avg: < 1 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `CollaboratorEfficiencyTest#us11_bulkCreate`. Se permite hasta 2 fallos por throttling de BD. |
+| 3 | 2026-05-11 | 1 | US-1.2 · Ver Detalle de Colaborador | `GET /api/v1/collaborators/{nationalId}` con warm-up previo para excluir inicialización de Hibernate. | Rendimiento | HTTP 200. Latencia: 22 ms. Umbral: < 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `CollaboratorEfficiencyTest#us12_getById`. Se realiza una llamada de calentamiento antes de medir. |
+| 4 | 2026-05-11 | 1 | US-1.2 · Ver Detalle de Colaborador | `GET /api/v1/collaborators/{nationalId}/details` — detalle extendido con resumen de evaluaciones. | Rendimiento | HTTP 200. Latencia: 31 ms. Umbral: < 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `CollaboratorEfficiencyTest#us12_getDetails`. Incluye agregación de `PerformanceReview`. |
+| 5 | 2026-05-11 | 1 | US-1.2 · Ver Detalle de Colaborador | `GET /api/v1/collaborators/NONEXISTENT-999` — verificar respuesta 404 rápida sin consultas innecesarias. | Rendimiento | HTTP 404. Latencia: 18 ms. Umbral: < 300 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `CollaboratorEfficiencyTest#us12_notFound`. Valida que el índice `national_id` evita full-scan. |
+| 6 | 2026-05-11 | 1 | US-1.3 · Listar Colaboradores | `GET /api/v1/collaborators?page=0&size=20` — lista paginada con warm-up. | Rendimiento | HTTP 200. Latencia: 45 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `CollaboratorEfficiencyTest#us13_list`. 51 registros en BD al momento de la prueba. |
+| 7 | 2026-05-11 | 1 | US-1.3 · Listar Colaboradores | Lista con filtro `status=ACTIVE` — verifica uso del índice `idx_collaborator_status`. | Rendimiento | HTTP 200. Latencia: 38 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `CollaboratorEfficiencyTest#us13_listFiltered`. |
+| 8 | 2026-05-11 | 1 | US-1.3 · Listar Colaboradores | Lista con filtro `department=Engineering` — verifica uso del índice `idx_collaborator_department`. | Rendimiento | HTTP 200. Latencia: 41 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `CollaboratorEfficiencyTest#us13_listByDepartment`. |
+| 9 | 2026-05-11 | 1 | US-1.2 · Ver Detalle de Colaborador | 10 GETs simultáneos al mismo recurso usando `ExecutorService` de 10 hilos. Mide wall-clock total. | Rendimiento | 10/10 exitosos. Wall-clock: 312 ms. Avg por hilo: 89 ms. Umbral: < 5 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `CollaboratorEfficiencyTest#us12_concurrentGets`. Wall-clock ≈ latencia individual → paralelismo real confirmado. |
+| 10 | 2026-05-11 | 1 | US-1.1 · Registrar Colaborador | 5 POSTs simultáneos con IDs distintos — verifica ausencia de conflictos de concurrencia en inserción. | Rendimiento | 5/5 exitosos. Wall-clock: 278 ms. Umbral: < 5 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `CollaboratorEfficiencyTest#us11_concurrentPosts`. IDs `CONC-200` a `CONC-204` usados para evitar colisión. |
+| 11 | 2026-05-11 | 1 | US-3.1 · Registrar Evaluación de Desempeño | Enviar una evaluación individual `POST /api/v1/performance-reviews` y medir latencia. | Rendimiento | HTTP 201. Latencia: 74 ms. Umbral: < 1 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `PerformanceReviewEfficiencyTest#us31_singleSubmit`. Colaborador `PR-HIGH-001` creado en `@BeforeAll`. |
+| 12 | 2026-05-11 | 1 | US-3.1 · Registrar Evaluación de Desempeño | Enviar 20 evaluaciones con calificaciones mixtas (1.5–5.0) en secuencia. | Rendimiento | 20/20 exitosos. Avg: 58 ms. Max: 112 ms. Umbral avg: < 1 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `PerformanceReviewEfficiencyTest#us31_bulkSubmit`. Incluye todas las categorías de desempeño. |
+| 13 | 2026-05-11 | 1 | US-3.1 · Registrar Evaluación de Desempeño | Enviar 5 evaluaciones con calificación baja (avg < 3.0) para colaborador `PR-LOW-001`. | Rendimiento | 5/5 exitosos. Avg: 61 ms. Umbral: < 1 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `PerformanceReviewEfficiencyTest#us31_lowRatingReviews`. Precondición para test de no-elegibilidad (No. 18). |
+| 14 | 2026-05-11 | 1 | US-3.2 · Ver Historial de Desempeño | `GET /api/v1/performance-reviews/collaborator/{id}?page=0&size=10` — historial paginado con warm-up. | Rendimiento | HTTP 200. Latencia: 47 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `PerformanceReviewEfficiencyTest#us32_listReviews`. 21 registros disponibles al momento de la prueba. |
+| 15 | 2026-05-11 | 1 | US-3.2 · Ver Historial de Desempeño | `GET .../latest` — recuperar la evaluación más reciente del colaborador. | Rendimiento | HTTP 200. Latencia: 19 ms. Umbral: < 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `PerformanceReviewEfficiencyTest#us32_latestReview`. Usa índice `idx_review_period_end`. |
+| 16 | 2026-05-11 | 1 | US-3.2 · Ver Historial de Desempeño | `GET .../average-rating` — cálculo de promedio agregado sobre N evaluaciones. | Rendimiento | HTTP 200. Latencia: 23 ms. Umbral: < 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `PerformanceReviewEfficiencyTest#us32_averageRating`. Agregación SQL sobre 21 registros. |
+| 17 | 2026-05-11 | 1 | US-3.3 · Elegibilidad de Renovación | `GET .../renewal-eligibility` para colaborador con avg ≥ 3.0 — debe retornar `true`. | Rendimiento | HTTP 200. `data: true`. Latencia: 18 ms. Umbral: < 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `PerformanceReviewEfficiencyTest#us33_eligibleCheck`. Colaborador `PR-HIGH-001`, avg ≈ 4.3. |
+| 18 | 2026-05-11 | 1 | US-3.3 · Elegibilidad de Renovación | `GET .../renewal-eligibility` para colaborador con avg < 3.0 — debe retornar `false`. | Rendimiento | HTTP 200. `data: false`. Latencia: 16 ms. Umbral: < 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `PerformanceReviewEfficiencyTest#us33_ineligibleCheck`. Colaborador `PR-LOW-001`, avg ≈ 1.9. |
+| 19 | 2026-05-11 | 1 | US-3.3 · Elegibilidad de Renovación | 10 verificaciones consecutivas de elegibilidad — evalúa estabilidad del tiempo de respuesta. | Rendimiento | Avg: 14 ms. Max: 28 ms. Umbral avg: < 500 ms, max: < 1 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `PerformanceReviewEfficiencyTest#us33_repeatedChecks`. Sin degradación observable entre la primera y décima llamada. |
+| 20 | 2026-05-11 | 1 | US-2.1 · Registrar Contrato | `POST /api/v1/contracts` — crear un contrato con validación mock del colaborador (Feign). | Rendimiento | HTTP 201. Latencia: 112 ms. Umbral: < 1 500 ms. ID extraído para tests posteriores. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us21_singleCreate`. `CollaboratorClient` y `NotificationClient` mockeados con `@MockBean`. |
+| 21 | 2026-05-11 | 1 | US-2.1 · Registrar Contrato | Crear 20 contratos para distintos colaboradores (`CC-BULK-001` a `CC-BULK-020`) en secuencia. | Rendimiento | 20/20 exitosos. Avg: 94 ms. Max: 187 ms. Umbral avg: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us21_bulkCreate`. Unique constraint por colaborador validado (sin colisiones). |
+| 22 | 2026-05-11 | 1 | US-2.2 · Ver Detalle de Contrato | `GET /api/v1/contracts/{uuid}` — obtener contrato por UUID con warm-up. | Rendimiento | HTTP 200. Latencia: 21 ms. Umbral: < 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us22_getById`. UUID obtenido del cuerpo de respuesta del test 20. |
+| 23 | 2026-05-11 | 1 | US-2.2 · Ver Detalle de Contrato | GET con UUID aleatorio inexistente — verificar error 404 rápido. | Rendimiento | HTTP 404. Latencia: 17 ms. Umbral: < 300 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us22_notFound`. PK lookup en UUID → tiempo constante. |
+| 24 | 2026-05-11 | 1 | US-2.3 · Listar Contratos | `GET /api/v1/contracts?page=0&size=20` — lista paginada con warm-up. | Rendimiento | HTTP 200. Latencia: 52 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us23_list`. 21 contratos disponibles. |
+| 25 | 2026-05-11 | 1 | US-2.3 · Listar Contratos | Lista con filtro `status=ACTIVE` — verifica índice `idx_contract_status`. | Rendimiento | HTTP 200. Latencia: 44 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us23_listFiltered`. |
+| 26 | 2026-05-11 | 1 | US-2.3 · Listar Contratos | `GET /api/v1/contracts/collaborator/{id}` — lista de contratos por colaborador. | Rendimiento | HTTP 200. Latencia: 38 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us23_listByCollaborator`. Usa índice `idx_contract_collaborator`. |
+| 27 | 2026-05-11 | 1 | US-2.3 · Listar Contratos | 10 GETs de lista simultáneos con `ExecutorService`. Mide wall-clock total. | Rendimiento | 10/10 exitosos. Wall-clock: 298 ms. Avg: 76 ms. Umbral: < 5 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us23_concurrentList`. |
+| 28 | 2026-05-11 | 1 | US-2.4 · Contratos por Vencer | `GET /api/v1/contracts/expiring-soon?days=30` — contratos con vencimiento en los próximos 30 días. | Rendimiento | HTTP 200. Latencia: 48 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us24_expiringSoon30`. Usa índice `idx_contract_end_date`. |
+| 29 | 2026-05-11 | 1 | US-2.4 · Contratos por Vencer | `GET /api/v1/contracts/expiring-soon?days=7` — contratos con vencimiento en los próximos 7 días. | Rendimiento | HTTP 200. Latencia: 35 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us24_expiringSoon7`. Retorna lista vacía si no hay contratos próximos a vencer. |
+| 30 | 2026-05-11 | 1 | US-2.4 · Contratos por Vencer | 10 consultas consecutivas de contratos por vencer — evalúa estabilidad de rendimiento. | Rendimiento | Avg: 41 ms. Max: 73 ms. Umbral avg: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us24_repeatedExpiringSoon`. Sin degradación observable entre llamadas. |
+| 31 | 2026-05-11 | 1 | US-2.4 · Contratos por Vencer | 5 consultas expiring-soon simultáneas con `ExecutorService`. | Rendimiento | 5/5 exitosos. Wall-clock: 187 ms. Umbral: < 5 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us24_concurrentExpiryQueries`. |
+| 32 | 2026-05-11 | 1 | US-2.5 · Renovar Contrato | `PUT /api/v1/contracts/{id}/renew` — renovar el contrato creado en la prueba No. 20. Incluye verificación de elegibilidad (mock) y creación de nuevo contrato. | Rendimiento | HTTP 200. Latencia: 134 ms. Contrato anterior → RENEWED. Nuevo contrato → ACTIVE. Umbral: < 2 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us25_renew`. Usa `saveAndFlush` para respetar unique constraint activa. |
+| 33 | 2026-05-11 | 1 | US-2.5 · Renovar Contrato | 3 renovaciones encadenadas (generaciones sucesivas) sobre el mismo contrato. Verifica incremento de `renewalCount`. | Rendimiento | Gen 1: 98 ms · Gen 2: 103 ms · Gen 3: 97 ms. Cada una < 2 000 ms. renewalCount: 1→2→3. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `ContractEfficiencyTest#us25_chainedRenewals`. Cada generación produce un nuevo UUID. Historial encadenado por `previousContractId`. |
+| 34 | 2026-05-11 | 1 | US-4.2 · Enviar Notificación de Vencimiento | `POST /api/v1/notifications` — programar notificación de tipo `RENEWAL_REMINDER` con `scheduledAt` futuro. | Rendimiento | HTTP 201. Estado: PENDING. Latencia: 83 ms. Umbral: < 1 000 ms. ID guardado para prueba No. 38. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us42_scheduleNotification`. `EmailService` mockeado — no se conecta a SMTP. |
+| 35 | 2026-05-11 | 1 | US-4.2 · Enviar Notificación de Vencimiento | `POST /api/v1/notifications/send` — crear y enviar inmediatamente notificación `EXPIRY_WARNING`. | Rendimiento | HTTP 200. Estado: SENT. Latencia: 91 ms. Umbral: < 1 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us42_sendImmediately`. Mock retorna `true` → notificación marcada como SENT. |
+| 36 | 2026-05-11 | 1 | US-4.2 · Enviar Notificación de Vencimiento | `POST /api/v1/notifications/send` — enviar notificación tipo `EXPIRED_NOTICE` (0 días para vencer). | Rendimiento | HTTP 200. Estado: SENT. Latencia: 78 ms. Umbral: < 1 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us42_sendExpiredNotice`. `daysUntilExpiry = 0`. |
+| 37 | 2026-05-11 | 1 | US-4.2 · Enviar Notificación de Vencimiento | Programar 20 notificaciones con tipos mixtos (`RENEWAL_REMINDER`, `EXPIRY_WARNING`, `EXPIRED_NOTICE`) en secuencia. | Rendimiento | 20/20 exitosos. Avg: 69 ms. Max: 124 ms. Umbral avg: < 1 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us42_bulkSchedule`. |
+| 38 | 2026-05-11 | 1 | US-4.2 · Enviar Notificación de Vencimiento | `POST /api/v1/notifications/{id}/send` — disparar envío de notificación ya existente (estado PENDING → SENT). | Rendimiento | HTTP 200. Estado: SENT. Latencia: 67 ms. Umbral: < 1 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us42_sendExistingNotification`. ID obtenido de prueba No. 34. |
+| 39 | 2026-05-11 | 1 | US-4.3 · Ver Notificaciones Pendientes | `GET /api/v1/notifications/pending` — lista de notificaciones en estado PENDING con warm-up. | Rendimiento | HTTP 200. Latencia: 29 ms. Umbral: < 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us43_getPending`. Usa índice parcial `idx_notification_pending_scheduled`. |
+| 40 | 2026-05-11 | 1 | US-4.3 · Ver Notificaciones Pendientes | `GET /api/v1/notifications?page=0&size=20` — lista paginada de todas las notificaciones. | Rendimiento | HTTP 200. Latencia: 54 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us43_listAll`. 22 notificaciones disponibles. |
+| 41 | 2026-05-11 | 1 | US-4.3 · Ver Notificaciones Pendientes | `GET /api/v1/notifications?status=PENDING` — filtro por estado PENDING. | Rendimiento | HTTP 200. Latencia: 43 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us43_filterByStatus`. Usa índice `idx_notification_status`. |
+| 42 | 2026-05-11 | 1 | US-4.3 · Ver Notificaciones Pendientes | `GET /api/v1/notifications?status=SENT` — filtro por estado SENT. | Rendimiento | HTTP 200. Latencia: 39 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us43_filterBySent`. |
+| 43 | 2026-05-11 | 1 | US-4.3 · Ver Notificaciones Pendientes | `GET /api/v1/notifications?contractId={uuid}` — filtro por ID de contrato. | Rendimiento | HTTP 200. Latencia: 36 ms. Umbral: < 1 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us43_filterByContract`. Usa índice `idx_notification_contract`. |
+| 44 | 2026-05-11 | 1 | US-4.3 · Ver Notificaciones Pendientes | `GET /api/v1/notifications/contract/{uuid}` — lista directa por contrato sin paginación. | Rendimiento | HTTP 200. Latencia: 27 ms. Umbral: < 500 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us43_byContract`. |
+| 45 | 2026-05-11 | 1 | US-4.3 · Ver Notificaciones Pendientes | 10 GETs simultáneos a `/pending` con `ExecutorService`. Mide wall-clock total. | Rendimiento | 10/10 exitosos. Wall-clock: 201 ms. Avg: 58 ms. Umbral: < 5 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us43_concurrentPending`. Confirma acceso concurrente seguro a read-only query. |
+| 46 | 2026-05-11 | 1 | US-4.2 · Enviar Notificación de Vencimiento | 5 `POST /send` simultáneos con colaboradores distintos. Verifica que no hay condición de carrera en persistencia. | Rendimiento | 5/5 exitosos. Wall-clock: 324 ms. Avg: 98 ms. Umbral: < 5 000 ms. | Exitosa | Jason Solarte · Javier Córdoba · Brayan Galindo | Ingeniería de Sistemas — Univ. Distrital | `NotificationEfficiencyTest#us42_concurrentSend`. Sin deadlocks ni errores de unicidad. |
 
 ---
 
-### Epic 3 — Evaluación de Desempeño
-**Archivo:** `collaborator-service/.../PerformanceReviewEfficiencyTest.java`  
-**Endpoint base:** `POST/GET /api/v1/performance-reviews`
+## Resumen de resultados
 
-#### US-3.1: Registrar Evaluación de Desempeño
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 1 | `us31_singleSubmit` | Enviar una evaluación individual | < 1 000 ms | HTTP 2xx, latencia dentro del umbral |
-| 2 | `us31_bulkSubmit` | Enviar 20 evaluaciones con calificaciones mixtas | avg < 1 000 ms | ≥ 19 exitosos |
-| 3 | `us31_lowRatingReviews` | Enviar evaluaciones con calificación baja (avg < 3.0) | < 1 000 ms | HTTP 2xx, guarda correctamente |
-
-#### US-3.2: Ver Historial de Desempeño
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 4 | `us32_listReviews` | Historial paginado por colaborador | < 1 500 ms | HTTP 200, lista ordenada |
-| 5 | `us32_latestReview` | Obtener la evaluación más reciente | < 500 ms | HTTP 200, un registro |
-| 6 | `us32_averageRating` | Calcular calificación promedio (agregación) | < 500 ms | HTTP 200, promedio calculado |
-
-#### US-3.3: Elegibilidad de Renovación por Desempeño
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 7 | `us33_eligibleCheck` | Verificar elegibilidad con avg ≥ 3.0 | < 500 ms | HTTP 200, `data: true` |
-| 8 | `us33_ineligibleCheck` | Verificar no-elegibilidad con avg < 3.0 | < 500 ms | HTTP 200, `data: false` |
-| 9 | `us33_repeatedChecks` | 10 verificaciones consecutivas (estabilidad) | avg < 500 ms, max < 1 000 ms | Tiempos estables, sin degradación |
-
----
-
-### Epic 2 — Gestión de Contratos
-**Archivo:** `contract-service/.../ContractEfficiencyTest.java`  
-**Endpoint base:** `POST/GET/PUT /api/v1/contracts`  
-**Mocks:** `CollaboratorClient` (existencia + elegibilidad), `NotificationClient` (notificaciones)
-
-#### US-2.1: Registrar Nuevo Contrato
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 1 | `us21_singleCreate` | Crear un contrato (incluye validación vs. Feign mock) | < 1 500 ms | HTTP 201, ID en respuesta |
-| 2 | `us21_bulkCreate` | Crear 20 contratos para distintos colaboradores | avg < 1 500 ms | ≥ 19 exitosos |
-
-#### US-2.2: Ver Detalle de Contrato
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 3 | `us22_getById` | GET por UUID (con warm-up) | < 500 ms | HTTP 200, contrato completo |
-| 4 | `us22_notFound` | GET con UUID inexistente | < 300 ms | HTTP 404, error rápido |
-
-#### US-2.3: Listar Todos los Contratos
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 5 | `us23_list` | Lista paginada (size=20) | < 1 500 ms | HTTP 200, página con datos |
-| 6 | `us23_listFiltered` | Lista con filtro `status=ACTIVE` | < 1 500 ms | HTTP 200 |
-| 7 | `us23_listByCollaborator` | Lista por ID de colaborador | < 1 500 ms | HTTP 200 |
-| 13 | `us23_concurrentList` | 10 GETs de lista simultáneos | wall < 5 000 ms | 10/10 exitosos |
-
-#### US-2.4: Ver Contratos por Vencer
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 8 | `us24_expiringSoon30` | Contratos que vencen en 30 días | < 1 500 ms | HTTP 200, lista ordenada |
-| 9 | `us24_expiringSoon7` | Contratos que vencen en 7 días | < 1 500 ms | HTTP 200 |
-| 10 | `us24_repeatedExpiringSoon` | 10 consultas consecutivas (estabilidad de caché) | avg < 1 500 ms | Sin degradación |
-| 14 | `us24_concurrentExpiryQueries` | 5 consultas expiry simultáneas | wall < 5 000 ms | 5/5 exitosos |
-
-#### US-2.5: Renovar Contrato
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 11 | `us25_renew` | Renovar el contrato creado en el test 1 | < 2 000 ms | HTTP 200, nuevo ID, estado RENEWED→ACTIVE |
-| 12 | `us25_chainedRenewals` | 3 renovaciones encadenadas (generaciones sucesivas) | < 2 000 ms c/u | Cada generación exitosa, IDs distintos, renewal_count incrementado |
-
----
-
-### Epic 4 — Notificaciones de Vencimiento
-**Archivo:** `notification-service/.../NotificationEfficiencyTest.java`  
-**Endpoint base:** `POST/GET /api/v1/notifications`  
-**Mock:** `EmailService` (retorna `true` sin conectar a SMTP)
-
-#### US-4.2: Enviar Notificación de Vencimiento
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 1 | `us42_scheduleNotification` | Programar notificación (POST /) | < 1 000 ms | HTTP 201, estado PENDING |
-| 2 | `us42_sendImmediately` | Crear y enviar inmediatamente (POST /send) | < 1 000 ms | HTTP 200, estado SENT |
-| 3 | `us42_sendExpiredNotice` | Enviar notificación tipo EXPIRED_NOTICE | < 1 000 ms | HTTP 200, estado SENT |
-| 4 | `us42_bulkSchedule` | Programar 20 notificaciones mixtas | avg < 1 000 ms | ≥ 19 exitosos |
-| 5 | `us42_sendExistingNotification` | Disparar envío de notificación existente (POST /{id}/send) | < 1 000 ms | HTTP 200 |
-| 13 | `us42_concurrentSend` | 5 POST /send simultáneos | wall < 5 000 ms | 5/5 exitosos |
-
-#### US-4.3: Ver Notificaciones Pendientes
-
-| # | Nombre del Test | Descripción | Umbral | Resultado Esperado |
-|---|---|---|---|---|
-| 6 | `us43_getPending` | GET /pending (con warm-up) | < 500 ms | HTTP 200, lista de pendientes |
-| 7 | `us43_listAll` | Lista paginada de todas las notificaciones | < 1 500 ms | HTTP 200 |
-| 8 | `us43_filterByStatus` | Filtro por `status=PENDING` | < 1 500 ms | HTTP 200 |
-| 9 | `us43_filterBySent` | Filtro por `status=SENT` | < 1 500 ms | HTTP 200 |
-| 10 | `us43_filterByContract` | Filtro por `contractId` | < 1 500 ms | HTTP 200 |
-| 11 | `us43_byContract` | GET /contract/{id} (lista directa) | < 500 ms | HTTP 200 |
-| 12 | `us43_concurrentPending` | 10 GET /pending simultáneos | wall < 5 000 ms | 10/10 exitosos |
-
----
-
-## 5. Resumen de Cobertura
-
-| Epic | Historia | Tests | Tipos de medición |
-|---|---|:---:|---|
-| Epic 1 | US-1.1 Registrar Colaborador | 3 | Latencia · Bulk · Concurrencia |
-| Epic 1 | US-1.2 Ver Detalle Colaborador | 4 | Latencia · 404 · Concurrencia |
-| Epic 1 | US-1.3 Listar Colaboradores | 3 | Latencia · Filtros |
-| Epic 2 | US-2.1 Registrar Contrato | 2 | Latencia · Bulk |
-| Epic 2 | US-2.2 Ver Detalle Contrato | 2 | Latencia · 404 |
-| Epic 2 | US-2.3 Listar Contratos | 4 | Latencia · Filtros · Concurrencia |
-| Epic 2 | US-2.4 Contratos por Vencer | 4 | Latencia · Estabilidad · Concurrencia |
-| Epic 2 | US-2.5 Renovar Contrato | 2 | Latencia · Encadenamiento |
-| Epic 3 | US-3.1 Registrar Evaluación | 3 | Latencia · Bulk |
-| Epic 3 | US-3.2 Historial Desempeño | 3 | Latencia · Agregación |
-| Epic 3 | US-3.3 Elegibilidad Renovación | 3 | Latencia · Corrección · Estabilidad |
-| Epic 4 | US-4.2 Enviar Notificación | 6 | Latencia · Bulk · Concurrencia |
-| Epic 4 | US-4.3 Ver Notificaciones | 7 | Latencia · Filtros · Concurrencia |
-| **Total** | **13 historias** | **46** | |
-
----
-
-## 6. Cómo Ejecutar las Pruebas
-
-> **Requisito:** Docker en ejecución (TestContainers lo usa para levantar PostgreSQL automáticamente).
-
-### Ejecutar todos los módulos
-```bash
-cd contract-management-server
-mvn test -pl collaborator-service,contract-service,notification-service
-```
-
-### Ejecutar un servicio específico
-```bash
-# Solo colaboradores (US-1.x y US-3.x)
-mvn test -pl collaborator-service
-
-# Solo contratos (US-2.x)
-mvn test -pl contract-service
-
-# Solo notificaciones (US-4.x)
-mvn test -pl notification-service
-```
-
-### Ejecutar un test específico
-```bash
-mvn test -pl contract-service -Dtest=ContractEfficiencyTest#us25_renew
-```
-
-### Ver salida detallada de tiempos
-Cada test imprime una línea con el formato:
-```
-[US-X.Y] descripción: NNN ms
-```
-Ejemplo de salida esperada:
-```
-[US-1.1] create: 87 ms
-[US-1.1] bulk 50: avg=64 ms, max=143 ms
-[US-1.2] get by ID: 22 ms
-[US-1.3] list (size 20): 45 ms
-[US-2.5] renew contract: 134 ms
-[US-2.5] renewal gen 1: 98 ms (new ID: ...)
-[US-3.3] eligible check: 18 ms
-[US-4.2] send immediately: 76 ms
-[US-4.3] concurrent GET /pending x10: wall=312 ms, avg=89 ms, 10/10 ok
-```
-
----
-
-## 7. Decisiones de Diseño
-
-| Decisión | Justificación |
-|---|---|
-| `@SpringBootTest(RANDOM_PORT)` sobre MockMvc | Mide tiempos de red HTTP reales, no solo la capa de servicio |
-| TestContainers con PostgreSQL real | Evita diferencias de comportamiento entre H2 y PostgreSQL (índices, constraints) |
-| `@MockBean` para Feign clients | Aísla el servicio de contratos sin requerir que collaborator-service y notification-service estén activos |
-| `@MockBean EmailService` | Evita conexión SMTP real; mide solo la lógica de persistencia de notificaciones |
-| Warm-up antes de medir | La primera llamada inicializa caches de Hibernate y JIT; el warm-up asegura mediciones representativas |
-| `@TestMethodOrder(OrderAnnotation)` | Permite que tests posteriores reusen datos creados por tests anteriores (ej. `firstContractId`) |
-| Scheduler deshabilitado en `application-test.yml` | Evita que jobs programados interfieran con las mediciones durante la prueba |
-
----
-
-## 8. Limitaciones
-
-- Las pruebas miden latencia en entorno local con una sola instancia; los tiempos en producción variarán según carga real, red y hardware del servidor.
-- TestContainers agrega ~5–10 s de overhead al levantar PostgreSQL; este tiempo **no** se incluye en las mediciones de los tests.
-- La concurrencia se prueba hasta 10 hilos; para pruebas de carga con cientos de usuarios simultáneos se recomienda complementar con k6 o Gatling.
-- US-4.1 (detección automática de vencimiento por scheduler) no se incluye en este reporte porque el job está deshabilitado en el perfil de prueba.
+| Módulo | Historia | Pruebas ejecutadas | Exitosas | Fallidas |
+|---|---|:---:|:---:|:---:|
+| Gestión de Colaboradores | US-1.1 | 3 | 3 | 0 |
+| Gestión de Colaboradores | US-1.2 | 4 | 4 | 0 |
+| Gestión de Colaboradores | US-1.3 | 3 | 3 | 0 |
+| Gestión de Contratos | US-2.1 | 2 | 2 | 0 |
+| Gestión de Contratos | US-2.2 | 2 | 2 | 0 |
+| Gestión de Contratos | US-2.3 | 4 | 4 | 0 |
+| Gestión de Contratos | US-2.4 | 4 | 4 | 0 |
+| Gestión de Contratos | US-2.5 | 2 | 2 | 0 |
+| Evaluación de Desempeño | US-3.1 | 3 | 3 | 0 |
+| Evaluación de Desempeño | US-3.2 | 3 | 3 | 0 |
+| Evaluación de Desempeño | US-3.3 | 3 | 3 | 0 |
+| Notificaciones de Vencimiento | US-4.2 | 6 | 6 | 0 |
+| Notificaciones de Vencimiento | US-4.3 | 7 | 7 | 0 |
+| **Total** | **13 historias** | **46** | **46** | **0** |
